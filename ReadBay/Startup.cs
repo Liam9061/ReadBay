@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReadBay.DataAccess.Data;
+using ReadBay.DataAccess.Initialiser;
 using ReadBay.DataAccess.Repository;
 using ReadBay.DataAccess.Repository.IRepository;
 using ReadBay.Utility;
@@ -43,6 +44,7 @@ namespace ReadBay
             services.Configure<StripeSettings>(Configuration.GetSection("Stripe"));
             services.Configure<TwilioSettings>(Configuration.GetSection("Twilio"));
             services.AddScoped<IUnitOfWork, UnitOfWork>(); //UnitOfWork added as part of dependency injection  
+            services.AddScoped<IDbInitialiser, DbInitialiser>();
             services.AddControllersWithViews(); //.AddRazorRuntimeCompilation(); Needed for 3.1 and below
             services.AddRazorPages();  //Needed when Scaffolding identity
             services.ConfigureApplicationCookie(options =>
@@ -72,7 +74,7 @@ namespace ReadBay
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IDbInitialiser dbInitialiser)
         {
             if (env.IsDevelopment())
             {
@@ -92,6 +94,7 @@ namespace ReadBay
             app.UseSession();
             app.UseAuthentication();
             app.UseAuthorization();
+            dbInitialiser.Initialize();
 
             app.UseEndpoints(endpoints =>
             {
